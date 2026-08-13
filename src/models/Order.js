@@ -1,15 +1,16 @@
 import mongoose from 'mongoose';
 
 const orderSchema = new mongoose.Schema({
-    customer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    products: [{
-        product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-        quantity: { type: Number, required: true },
-        priceAtPurchase: { type: Number, required: true }
-    }],
-    totalAmount: { type: Number, required: true },
-    status: { type: String, enum: ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'], default: 'PENDING' },
-    shippingAddress: { type: String, required: true }
+    listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
+    buyerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    supplierId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    status: { 
+        type: String, 
+        enum: ['requested', 'accepted', 'ready', 'completed', 'rejected', 'cancelled'], 
+        default: 'requested' 
+    },
+    paymentStatus: { type: String, enum: ['pending', 'paid', 'not_applicable'], default: 'not_applicable' },
+    scheduledPickupTime: { type: Date }
 }, { timestamps: true });
 
 const Order = mongoose.model('Order', orderSchema);

@@ -21,7 +21,7 @@ export const protect = async (req, res, next) => {
 };
 
 export const admin = (req, res, next) => {
-    if (req.user && req.user.role === 'ADMIN') {
+    if (req.user && req.user.role === 'admin') {
         next();
     } else {
         res.status(401).json({ message: 'Not authorized as an admin' });
@@ -29,9 +29,17 @@ export const admin = (req, res, next) => {
 };
 
 export const supplier = (req, res, next) => {
-    if (req.user && (req.user.role === 'SUPPLIER' || req.user.role === 'ADMIN')) {
+    if (req.user && (req.user.role === 'supplier' || req.user.role === 'admin')) {
         next();
     } else {
         res.status(401).json({ message: 'Not authorized as a supplier' });
+    }
+};
+
+export const ngo = (req, res, next) => {
+    if (req.user && (req.user.role === 'ngo' || req.user.role === 'admin')) {
+        next();
+    } else {
+        res.status(401).json({ message: 'Not authorized as an NGO' });
     }
 };

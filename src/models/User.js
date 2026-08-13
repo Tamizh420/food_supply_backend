@@ -5,7 +5,12 @@ const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ['ADMIN', 'SUPPLIER', 'CUSTOMER'], default: 'CUSTOMER' }
+    role: { type: String, enum: ['supplier', 'buyer', 'ngo', 'admin'], default: 'buyer' },
+    geolocation: {
+        lat: { type: Number },
+        lng: { type: Number }
+    },
+    verified: { type: Boolean, default: false } // Relevant for NGOs
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
