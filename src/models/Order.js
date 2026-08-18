@@ -9,8 +9,22 @@ const orderSchema = new mongoose.Schema({
         enum: ['requested', 'accepted', 'ready', 'completed', 'rejected', 'cancelled'], 
         default: 'requested' 
     },
-    paymentStatus: { type: String, enum: ['pending', 'paid', 'not_applicable'], default: 'not_applicable' },
-    scheduledPickupTime: { type: Date }
+    paymentStatus: { type: String, enum: ['not_applicable', 'pending', 'paid', 'failed', 'refund_pending', 'refunded'], default: 'not_applicable' },
+    priceAtOrder: { type: Number, required: true },
+    quantity: { type: Number, required: true, min: 1 },
+    totalAmount: { type: Number, required: true },
+    currency: { type: String, default: 'INR' },
+    paymentGateway: { type: String },
+    paymentOrderId: { type: String },
+    paymentTransactionId: { type: String },
+    paymentSignature: { type: String },
+    refundId: { type: String },
+    scheduledPickupTime: { type: Date },
+    pickupCode: { type: String },
+    failedVerificationAttempts: { type: Number, default: 0 },
+    pickupVerifiedAt: { type: Date },
+    pickupVerifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    verificationMethod: { type: String, enum: ['code', 'admin_override'] }
 }, { timestamps: true });
 
 const Order = mongoose.model('Order', orderSchema);

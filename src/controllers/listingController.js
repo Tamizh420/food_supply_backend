@@ -13,6 +13,72 @@ function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   return R * c; // Distance in km
 }
 
+// @desc    Fetch nearby active listings
+// @route   GET /api/listings/nearby
+// @access  Public
+export const getNearbyListings = async (req, res) => {
+    try {
+        const { latitude, longitude, radius, pricingType, foodType, sort } = req.query;
+
+        const maxDistance = radius ? parseFloat(radius) * 1000 : 10000; // default 10km in meters
+
+        const pipeline = [
+            {
+                $geoNear: {
+                    near: {
+                        type: 'Point',
+                        coordinates: [parseFloat(longitude), parseFloat(latitude)]
+                    },
+                    distanceField: 'distanceKm',
+                    maxDistance: maxDistance,
+                    distanceMultiplier: 0.001, // Convert meters to km
+                    spherical: true
+                }
+            },
+            {
+                $match: {
+                    status: 'active',
+                    expiresAt: { $gt: new Date() }
+                }
+            }
+        ];
+
+        if (pricingType) {
+            pipeline.push({ $match: { pricingType } });
+        }
+        
+        if (foodType) {
+            pipeline.push({ $match: { foodType: { $regex: foodType, $options: 'i' } } });
+        }
+
+        // Apply sorting
+        let sortObj = {};
+        if (sort === 'nearest') {
+            sortObj = { distanceKm: 1 };
+        } else if (sort === 'recent') {
+            sortObj = { createdAt: -1 };
+        } else if (sort === 'price') {
+            sortObj = { price: 1 };
+        } else if (sort === 'expiring') {
+            sortObj = { expiresAt: 1 };
+        } else {
+            sortObj = { distanceKm: 1 }; // Default to nearest
+        }
+        
+        pipeline.push({ $sort: sortObj });
+
+        // Execute pipeline
+        let listings = await Listing.aggregate(pipeline);
+        
+        // Populate supplierId since aggregate doesn't do it automatically
+        await Listing.populate(listings, { path: 'supplierId', select: 'name email verified geolocation' });
+
+        res.json(listings);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
 // @desc    Fetch all active listings (for buyers)
 // @route   GET /api/listings
 // @access  Public
@@ -90,6 +156,14 @@ export const createListing = async (req, res) => {
     try {
         const { foodType, quantity, cookedAt, expiresAt, pricingType, price, images, pickupLocation } = req.body;
 
+        const geoPickupLocation = {
+            address: pickupLocation.address,
+            location: {
+                type: 'Point',
+                coordinates: [pickupLocation.lng, pickupLocation.lat]
+            }
+        };
+
         const listing = new Listing({
             foodType,
             quantity,
@@ -98,7 +172,7 @@ export const createListing = async (req, res) => {
             pricingType,
             price: pricingType === 'paid' ? price : 0,
             images,
-            pickupLocation,
+            pickupLocation: geoPickupLocation,
             supplierId: req.user._id,
         });
 
@@ -118,7 +192,7 @@ export const updateListing = async (req, res) => {
 
         if (listing) {
             if (listing.supplierId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-                return res.status(401).json({ message: 'Not authorized to update this listing' });
+                return res.status(403).json({ message: 'Not authorized to update this listing' });
             }
 
             listing.foodType = req.body.foodType || listing.foodType;
@@ -127,6 +201,19 @@ export const updateListing = async (req, res) => {
             listing.pricingType = req.body.pricingType || listing.pricingType;
             listing.price = req.body.pricingType === 'paid' ? (req.body.price || listing.price) : 0;
             listing.status = req.body.status || listing.status;
+            
+            if (req.body.pickupLocation) {
+                listing.pickupLocation = {
+                    address: req.body.pickupLocation.address || listing.pickupLocation.address,
+                    location: {
+                        type: 'Point',
+                        coordinates: [
+                            req.body.pickupLocation.lng || listing.pickupLocation.location.coordinates[0],
+                            req.body.pickupLocation.lat || listing.pickupLocation.location.coordinates[1]
+                        ]
+                    }
+                };
+            }
 
             const updatedListing = await listing.save();
             res.json(updatedListing);
@@ -147,7 +234,7 @@ export const deleteListing = async (req, res) => {
 
         if (listing) {
              if (listing.supplierId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-                return res.status(401).json({ message: 'Not authorized to delete this listing' });
+                return res.status(403).json({ message: 'Not authorized to delete this listing' });
             }
             await Listing.deleteOne({ _id: listing._id });
             res.json({ message: 'Listing removed' });

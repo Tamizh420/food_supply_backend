@@ -12,6 +12,7 @@ import cron from 'node-cron';
 import Listing from './src/models/Listing.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { notFound, errorHandler } from './src/middlewares/errorMiddleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,7 +26,11 @@ const app = express();
 
 // Middlewares
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf.toString();
+    }
+}));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -59,6 +64,9 @@ app.get('/', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
+app.use(notFound);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

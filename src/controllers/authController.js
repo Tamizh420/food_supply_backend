@@ -38,7 +38,7 @@ export const registerUser = async (req, res) => {
         name,
         email,
         password,
-        role: role || 'CUSTOMER',
+        role: role || 'buyer',
     });
 
     if (user) {

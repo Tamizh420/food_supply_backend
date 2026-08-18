@@ -24,7 +24,7 @@ export const admin = (req, res, next) => {
     if (req.user && req.user.role === 'admin') {
         next();
     } else {
-        res.status(401).json({ message: 'Not authorized as an admin' });
+        res.status(403).json({ message: 'Not authorized as an admin' });
     }
 };
 
@@ -32,7 +32,7 @@ export const supplier = (req, res, next) => {
     if (req.user && (req.user.role === 'supplier' || req.user.role === 'admin')) {
         next();
     } else {
-        res.status(401).json({ message: 'Not authorized as a supplier' });
+        res.status(403).json({ message: 'Not authorized as a supplier' });
     }
 };
 
@@ -40,6 +40,6 @@ export const ngo = (req, res, next) => {
     if (req.user && (req.user.role === 'ngo' || req.user.role === 'admin')) {
         next();
     } else {
-        res.status(401).json({ message: 'Not authorized as an NGO' });
+        res.status(403).json({ message: 'Not authorized as an NGO' });
     }
 };
