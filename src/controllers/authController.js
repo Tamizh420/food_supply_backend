@@ -26,7 +26,7 @@ export const authUser = async (req, res) => {
 // @route   POST /api/auth/register
 // @access  Public
 export const registerUser = async (req, res) => {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, requestSupplier } = req.body;
 
     const userExists = await User.findOne({ email });
 
@@ -38,7 +38,8 @@ export const registerUser = async (req, res) => {
         name,
         email,
         password,
-        role: role || 'buyer',
+        role: 'buyer',
+        supplierStatus: requestSupplier ? 'pending' : 'none',
     });
 
     if (user) {

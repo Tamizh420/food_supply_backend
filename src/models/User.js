@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
     },
     password: { type: String, required: true },
     role: { type: String, enum: ['supplier', 'buyer', 'ngo', 'admin'], default: 'buyer' },
+    supplierStatus: { type: String, enum: ['none', 'pending', 'approved', 'rejected'], default: 'none' },
     geolocation: {
         lat: { type: Number },
         lng: { type: Number }

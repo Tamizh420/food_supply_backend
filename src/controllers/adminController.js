@@ -99,3 +99,33 @@ export const updateUserRole = async (req, res) => {
         res.status(500).json({ message: 'Server error updating user role' });
     }
 };
+// @desc    Update supplier request status
+// @route   PUT /api/admin/users/:id/supplier-status
+// @access  Private/Admin
+export const updateSupplierStatus = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (user) {
+            const { status } = req.body;
+            if (['approved', 'rejected'].includes(status)) {
+                user.supplierStatus = status;
+                if (status === 'approved') {
+                    user.role = 'supplier';
+                }
+                const updatedUser = await user.save();
+                res.json({
+                    _id: updatedUser._id,
+                    name: updatedUser.name,
+                    role: updatedUser.role,
+                    supplierStatus: updatedUser.supplierStatus
+                });
+            } else {
+                res.status(400).json({ message: 'Invalid status' });
+            }
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Server error updating supplier status' });
+    }
+};

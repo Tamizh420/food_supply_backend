@@ -1,5 +1,5 @@
 import express from 'express';
-import { getStats, getUsers, createUser, updateUserRole } from '../controllers/adminController.js';
+import { getStats, getUsers, createUser, updateUserRole, updateSupplierStatus } from '../controllers/adminController.js';
 import { protect, admin } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -14,5 +14,6 @@ router.route('/users')
     .post(createUser);
 
 router.put('/users/:id/role', updateUserRole);
+router.put('/users/:id/supplier-status', updateSupplierStatus);
 
 export default router;
